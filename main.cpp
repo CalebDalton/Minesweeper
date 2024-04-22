@@ -5,8 +5,6 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
-#include "WelcomeScreen.h"
-//#include "Minesweeper.cpp"
 
 using namespace std;
 using namespace sf;
@@ -272,6 +270,32 @@ void Minesweeper(string& gameCol, string& gameRow, string& mineNum, Font& font){
         while (gameWindow.pollEvent(event)) {
             if (event.type == Event::Closed)
                 gameWindow.close();
+
+            if(event.type == Event::MouseButtonPressed){
+                Vector2f mouse = gameWindow.mapPixelToCoords((Mouse::getPosition(gameWindow)));
+                int xValue = (int)mouse.y/32;
+                int yValue = (int)mouse.x/32;
+                if(event.mouseButton.button == Mouse::Left) {
+                    mineArray[xValue][yValue].state = State::Revealed;
+
+                    FloatRect pauseButtonSBounds = pauseButtonS.getGlobalBounds();
+                    if (pauseButtonSBounds.contains(mouse)) {
+                        screenPaused = !screenPaused;
+                    }
+
+                    FloatRect leaderBounds = leaderboardS.getGlobalBounds();
+                    if(leaderBounds.contains(mouse)){
+                        //windowFocus = !windowFocus;
+                        Leaderboard(width, height, font);
+
+                    }
+                }
+                if(event.mouseButton.button == Mouse::Right){
+                    mineArray[xValue][yValue].state = State::Flagged;
+                }
+
+
+            }
         }
         gameWindow.clear(Color::White);
 
@@ -282,38 +306,15 @@ void Minesweeper(string& gameCol, string& gameRow, string& mineNum, Font& font){
                 tileRevealedS.setPosition(tileRevealed.getSize().x * y, tileRevealed.getSize().y * x);
                 flagTextureS.setPosition(flagTexture.getSize().x * y, flagTexture.getSize().y * x);
 
-                if (event.type == Event::MouseButtonPressed){
-                    Vector2f mouse = gameWindow.mapPixelToCoords(Mouse::getPosition(gameWindow));
-                    FloatRect tileBounds = tileHiddenS.getGlobalBounds();
-                    for(int i = 0; i < row; i++){
-                        for(int j = 0; j < column; j++){
-
-                            if(event.mouseButton.button == Mouse::Left){
-                                if(tileBounds.contains(mouse) && mineArray[x][y].state == State::Hidden){
-                                    RevealTiles(mineArray, gameWindow, x, y, tileRevealed, tileRevealedS, oneS, twoS, threeS, fourS, fiveS, sixS, sevenS, eightS);
-                                    mineArray[x][y].state = State::Revealed;
-                                }
-                            }
-                            if(event.mouseButton.button == Mouse::Right){
-                                if(tileBounds.contains(mouse) && mineArray[x][y].state != State::Revealed){
-                                    if(tileFlagged) {
-                                        mineArray[x][y].state = State::Hidden;
-                                    }
-                                    if(!tileFlagged) {
-                                        mineArray[x][y].state = State::Flagged;
-                                    }
-                                    tileFlagged = !tileFlagged;
-                                }
-                            }
-                        }
-                    }
-                }
                 if (mineArray[x][y].state == State::Hidden) {
                     gameWindow.draw(tileHiddenS);
-                }
-                else if (mineArray[x][y].state == State::Revealed) {
+                } else if (mineArray[x][y].state == State::Flagged) {
+                    gameWindow.draw(tileHiddenS);
+                    gameWindow.draw(flagTextureS);
+                } else if (mineArray[x][y].state == State::Revealed) {
                     tileRevealedS.setPosition(tileRevealed.getSize().x * y, tileRevealed.getSize().y * x);
                     gameWindow.draw(tileRevealedS);
+
                     switch (mineArray[x][y].content) {
                         case Content::Empty:
                             RevealTiles(mineArray, gameWindow, x, y, tileRevealed, tileRevealedS, oneS, twoS, threeS, fourS, fiveS, sixS, sevenS, eightS);
@@ -354,40 +355,37 @@ void Minesweeper(string& gameCol, string& gameRow, string& mineNum, Font& font){
                             gameWindow.draw(mineTextureS);
                             mineTextureS.setPosition(tileRevealed.getSize().x * y, tileRevealed.getSize().y * x);
                             break;
-
-                    }
                 }
-                else if (mineArray[x][y].state == State::Flagged) {
-                    gameWindow.draw(tileHiddenS);
-                    gameWindow.draw(flagTextureS);
                 }
-
             }
         }
+
+
+
 
         //Work on getting the click event to work
-        if(event.type == Event::MouseButtonPressed){
-            if(event.mouseButton.button == Mouse::Left) {
-                //Play/Pause logic
-                Vector2f mouse = gameWindow.mapPixelToCoords(Mouse::getPosition(gameWindow));
-                FloatRect pauseButtonSBounds = pauseButtonS.getGlobalBounds();
-                if (pauseButtonSBounds.contains(mouse)) {
-                     screenPaused = !screenPaused;
-                }
-
-
-            }
-        }
-
-        if (event.type == Event::MouseButtonPressed) {
-            Vector2f mouse = gameWindow.mapPixelToCoords(Mouse::getPosition(gameWindow));
-            FloatRect leaderBounds = leaderboardS.getGlobalBounds();
-            if(leaderBounds.contains(mouse)){
-                //windowFocus = !windowFocus;
-                Leaderboard(width, height, font);
-
-            }
-        }
+//        if(event.type == Event::MouseButtonPressed){
+//            if(event.mouseButton.button == Mouse::Left) {
+//                //Play/Pause logic
+//                Vector2f mouse = gameWindow.mapPixelToCoords(Mouse::getPosition(gameWindow));
+//                FloatRect pauseButtonSBounds = pauseButtonS.getGlobalBounds();
+//                if (pauseButtonSBounds.contains(mouse)) {
+//                     screenPaused = !screenPaused;
+//                }
+//
+//
+//            }
+//        }
+//
+//        if (event.type == Event::MouseButtonPressed) {
+//            Vector2f mouse = gameWindow.mapPixelToCoords(Mouse::getPosition(gameWindow));
+//            FloatRect leaderBounds = leaderboardS.getGlobalBounds();
+//            if(leaderBounds.contains(mouse)){
+//                //windowFocus = !windowFocus;
+//                Leaderboard(width, height, font);
+//
+//            }
+//        }
 
         gameWindow.draw(tileHiddenS);
 
