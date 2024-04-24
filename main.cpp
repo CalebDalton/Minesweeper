@@ -87,6 +87,13 @@ void FlagCounter(int flagCount, RenderWindow& gameWindow, int row){
         digitMinusS.setPosition(12, 32 * (row + 0.5f) + 16);
     }
 
+    switch(flagCount){
+        case 1:
+            gameWindow.draw(digitOneS);
+            digitOneS.setPosition(36, 32 * (row + 0.5f) + 16);
+        case 2:
+            gameWindow.draw(digitTwoS)
+    }
 
 }
 
@@ -421,14 +428,16 @@ void Minesweeper(string& gameCol, string& gameRow, string& mineNum, Font& font){
                 Vector2f mouse = gameWindow.mapPixelToCoords((Mouse::getPosition(gameWindow)));
                 int xValue = (int)mouse.y/32;
                 int yValue = (int)mouse.x/32;
-                if(event.mouseButton.button == Mouse::Left && mineArray[xValue][yValue].state != State::Flagged && xValue >= 0 && xValue < row && yValue >= 0 && yValue < column) {
-                    if(mineArray[xValue][yValue].content == Content::Mine){
-                        gameLost = GameOver(mineArray, gameWindow, xValue, yValue, row, column, tileRevealed, mineTextureS, faceLoseS);
-                    }else {
-                        RevealTiles(mineArray, gameWindow, xValue, yValue, tileRevealed, tileRevealedS, oneS, twoS,
-                                    threeS, fourS, fiveS, sixS, sevenS, eightS);
+                if(xValue >= 0 && xValue < row && yValue >= 0 && yValue < column) {
+                    if(event.mouseButton.button == Mouse::Left && mineArray[xValue][yValue].state != State::Flagged) {
+                        if (mineArray[xValue][yValue].content == Content::Mine) {
+                            gameLost = GameOver(mineArray, gameWindow, xValue, yValue, row, column, tileRevealed,
+                                                mineTextureS, faceLoseS);
+                        } else {
+                            RevealTiles(mineArray, gameWindow, xValue, yValue, tileRevealed, tileRevealedS, oneS, twoS,
+                                        threeS, fourS, fiveS, sixS, sevenS, eightS);
+                        }
                     }
-
                 }
                 if(event.mouseButton.button == Mouse::Right && mineArray[xValue][yValue].state != State::Revealed && xValue >= 0 && xValue < row && yValue >= 0 && yValue < column){
                     if(mineArray[xValue][yValue].state == State::Flagged) {
@@ -459,6 +468,7 @@ void Minesweeper(string& gameCol, string& gameRow, string& mineNum, Font& font){
                     FloatRect debugBounds = debugTextureS.getGlobalBounds();
                     if(debugBounds.contains(mouse)){
                         debugMode = !debugMode;
+                        cout << "Debug" << endl;
                     }
 
                     FloatRect faceLoseBounds = faceLoseS.getGlobalBounds();
