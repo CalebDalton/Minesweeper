@@ -37,6 +37,59 @@ struct Tiles{
     }
 };
 
+void FlagCounter(int flagCount, RenderWindow& gameWindow, int row){
+    Texture digitZero;
+    digitZero.loadFromFile("files/images/digits.png", IntRect(0,0,21,32));
+    Sprite digitZeroS;
+    digitZeroS.setTexture(digitZero);
+    Texture digitOne;
+    digitOne.loadFromFile("files/images/digits.png", IntRect(21,0,21,32));
+    Sprite digitOneS;
+    digitOneS.setTexture(digitOne);
+    Texture digitTwo;
+    digitTwo.loadFromFile("files/images/digits.png", IntRect(42,0,21,32));
+    Sprite digitTwoS;
+    digitTwoS.setTexture(digitTwo);
+    Texture digitThree;
+    digitThree.loadFromFile("files/images/digits.png", IntRect(63,0,21,32));
+    Sprite digitThreeS;
+    digitThreeS.setTexture(digitThree);
+    Texture digitFour;
+    digitFour.loadFromFile("files/images/digits.png", IntRect(84,0,21,32));
+    Sprite digitFourS;
+    digitFourS.setTexture(digitFour);
+    Texture digitFive;
+    digitFive.loadFromFile("files/images/digits.png", IntRect(105,0,21,32));
+    Sprite digitFiveS;
+    digitFiveS.setTexture(digitFive);
+    Texture digitSix;
+    digitSix.loadFromFile("files/images/digits.png", IntRect(126,0,21,32));
+    Sprite digitSixS;
+    digitSixS.setTexture(digitSix);
+    Texture digitSeven;
+    digitSeven.loadFromFile("files/images/digits.png", IntRect(147,0,21,32));
+    Sprite digitSevenS;
+    digitSevenS.setTexture(digitSeven);
+    Texture digitEight;
+    digitEight.loadFromFile("files/images/digits.png", IntRect(168,0,21,32));
+    Sprite digitEightS;
+    digitEightS.setTexture(digitEight);
+    Texture digitNine;
+    digitNine.loadFromFile("files/images/digits.png", IntRect(189,0,21,32));
+    Sprite digitNineS;
+    digitNineS.setTexture(digitNine);
+    Texture digitMinus;
+    digitMinus.loadFromFile("files/images/digits.png", IntRect(210,0,21,32));
+    Sprite digitMinusS;
+    digitMinusS.setTexture(digitMinus);
+    if(flagCount < 0){
+        gameWindow.draw(digitMinusS);
+        digitMinusS.setPosition(12, 32 * (row + 0.5f) + 16);
+    }
+
+
+}
+
 void RevealTiles(vector<vector<Tiles>>& mineArray, RenderWindow& gameWindow, int i, int j, Texture& revealedT, Sprite& revealedS, Sprite& one, Sprite& two, Sprite& three, Sprite& four, Sprite& five, Sprite& six, Sprite& seven, Sprite& eight){
     int row = mineArray.size();
     int col = mineArray[0].size();
@@ -63,6 +116,22 @@ void RevealTiles(vector<vector<Tiles>>& mineArray, RenderWindow& gameWindow, int
         }
     }
 
+}
+
+bool GameOver(vector<vector<Tiles>>& mineArray, RenderWindow& gameWindow, int i, int j, int row, int column, Texture& tileRevealed, Sprite& mine, Sprite& faceLoseS){
+    bool gameLost = true;
+    for (int x = 0; x < i; x++) {
+        for (int y = 0; y <= j; y++) {
+            if(mineArray[x][y].content == Content::Mine){
+                gameWindow.draw(mine);
+                mine.setPosition(tileRevealed.getSize().x * y, tileRevealed.getSize().y * x);
+            }
+        }
+    }
+    gameWindow.draw(faceLoseS);
+    faceLoseS.setPosition(((column / 2) * 32) - 32, 32 * (row + 0.5f));
+
+    return gameLost;
 }
 
 void Leaderboard(float width, float height, Font& font){
@@ -174,10 +243,6 @@ void Minesweeper(string& gameCol, string& gameRow, string& mineNum, Font& font){
     TextureFile(debugTexture, "files/images/debug.png");
     Sprite debugTextureS;
     debugTextureS.setTexture(debugTexture);
-    Texture digitTexture;
-    TextureFile(digitTexture, "files/images/digits.png");
-    Sprite digitTextureS;
-    digitTextureS.setTexture(digitTexture);
     Texture one;
     TextureFile(one, "files/images/number_1.png");
     Sprite oneS;
@@ -261,42 +326,18 @@ void Minesweeper(string& gameCol, string& gameRow, string& mineNum, Font& font){
     pauseButtonS.setPosition((column * 32) - 240, 32 * (row + 0.5f));
     playButtonS.setPosition((column * 32) - 240, 32 * (row + 0.5f));
     bool screenPaused = false;
-    bool tileFlagged = false;
+    bool debugMode = false;
+    bool gameLost = false;
+    bool gamePaused = false;
+    int flagCount = mines;
+
 
     while(gameWindow.isOpen()){
 
         Event event{};
         RectangleShape rectangle;
-        while (gameWindow.pollEvent(event)) {
-            if (event.type == Event::Closed)
-                gameWindow.close();
-
-            if(event.type == Event::MouseButtonPressed){
-                Vector2f mouse = gameWindow.mapPixelToCoords((Mouse::getPosition(gameWindow)));
-                int xValue = (int)mouse.y/32;
-                int yValue = (int)mouse.x/32;
-                if(event.mouseButton.button == Mouse::Left) {
-                    mineArray[xValue][yValue].state = State::Revealed;
-
-                    FloatRect pauseButtonSBounds = pauseButtonS.getGlobalBounds();
-                    if (pauseButtonSBounds.contains(mouse)) {
-                        screenPaused = !screenPaused;
-                    }
-
-                    FloatRect leaderBounds = leaderboardS.getGlobalBounds();
-                    if(leaderBounds.contains(mouse)){
-                        //windowFocus = !windowFocus;
-                        Leaderboard(width, height, font);
-
-                    }
-                }
-                if(event.mouseButton.button == Mouse::Right){
-                    mineArray[xValue][yValue].state = State::Flagged;
-                }
 
 
-            }
-        }
         gameWindow.clear(Color::White);
 
         //Draws the tiles
@@ -305,6 +346,8 @@ void Minesweeper(string& gameCol, string& gameRow, string& mineNum, Font& font){
                 tileHiddenS.setPosition(tileHidden.getSize().x * y, tileHidden.getSize().y * x);
                 tileRevealedS.setPosition(tileRevealed.getSize().x * y, tileRevealed.getSize().y * x);
                 flagTextureS.setPosition(flagTexture.getSize().x * y, flagTexture.getSize().y * x);
+
+
 
                 if (mineArray[x][y].state == State::Hidden) {
                     gameWindow.draw(tileHiddenS);
@@ -355,50 +398,112 @@ void Minesweeper(string& gameCol, string& gameRow, string& mineNum, Font& font){
                             gameWindow.draw(mineTextureS);
                             mineTextureS.setPosition(tileRevealed.getSize().x * y, tileRevealed.getSize().y * x);
                             break;
+                    }
                 }
+                if(debugMode || gameLost){
+                    if(mineArray[x][y].content == Content::Mine){
+                        mineArray[x][y].state = State::Revealed;
+                    }
+                }else{
+                    if(mineArray[x][y].content == Content::Mine && mineArray[x][y].state != State::Flagged){
+                        mineArray[x][y].state = State::Hidden;
+                    }
                 }
             }
         }
 
 
+        while (gameWindow.pollEvent(event)) {
+            if (event.type == Event::Closed)
+                gameWindow.close();
 
+            if(event.type == Event::MouseButtonPressed && !gameLost){
+                Vector2f mouse = gameWindow.mapPixelToCoords((Mouse::getPosition(gameWindow)));
+                int xValue = (int)mouse.y/32;
+                int yValue = (int)mouse.x/32;
+                if(event.mouseButton.button == Mouse::Left && mineArray[xValue][yValue].state != State::Flagged && xValue >= 0 && xValue < row && yValue >= 0 && yValue < column) {
+                    if(mineArray[xValue][yValue].content == Content::Mine){
+                        gameLost = GameOver(mineArray, gameWindow, xValue, yValue, row, column, tileRevealed, mineTextureS, faceLoseS);
+                    }else {
+                        RevealTiles(mineArray, gameWindow, xValue, yValue, tileRevealed, tileRevealedS, oneS, twoS,
+                                    threeS, fourS, fiveS, sixS, sevenS, eightS);
+                    }
 
-        //Work on getting the click event to work
-//        if(event.type == Event::MouseButtonPressed){
-//            if(event.mouseButton.button == Mouse::Left) {
-//                //Play/Pause logic
-//                Vector2f mouse = gameWindow.mapPixelToCoords(Mouse::getPosition(gameWindow));
-//                FloatRect pauseButtonSBounds = pauseButtonS.getGlobalBounds();
-//                if (pauseButtonSBounds.contains(mouse)) {
-//                     screenPaused = !screenPaused;
-//                }
-//
-//
-//            }
-//        }
-//
-//        if (event.type == Event::MouseButtonPressed) {
-//            Vector2f mouse = gameWindow.mapPixelToCoords(Mouse::getPosition(gameWindow));
-//            FloatRect leaderBounds = leaderboardS.getGlobalBounds();
-//            if(leaderBounds.contains(mouse)){
-//                //windowFocus = !windowFocus;
-//                Leaderboard(width, height, font);
-//
-//            }
-//        }
+                }
+                if(event.mouseButton.button == Mouse::Right && mineArray[xValue][yValue].state != State::Revealed && xValue >= 0 && xValue < row && yValue >= 0 && yValue < column){
+                    if(mineArray[xValue][yValue].state == State::Flagged) {
+                        flagCount++;
+                        mineArray[xValue][yValue].state = State::Hidden;
+                    }
+                    else {
+                        flagCount--;
+                        mineArray[xValue][yValue].state = State::Flagged;
+                    }
+                }
+            }
+
+            if(event.type == Event::MouseButtonReleased){
+                if(event.mouseButton.button == Mouse::Left) {
+                    //Play/Pause logic
+                    Vector2f mouse = gameWindow.mapPixelToCoords(Mouse::getPosition(gameWindow));
+                    FloatRect pauseButtonSBounds = pauseButtonS.getGlobalBounds();
+                    if (pauseButtonSBounds.contains(mouse)) {
+                        screenPaused = !screenPaused;
+                    }
+
+                    FloatRect leaderBounds = leaderboardS.getGlobalBounds();
+                    if(leaderBounds.contains(mouse)) {
+                        Leaderboard(width, height, font);
+                    }
+
+                    FloatRect debugBounds = debugTextureS.getGlobalBounds();
+                    if(debugBounds.contains(mouse)){
+                        debugMode = !debugMode;
+                    }
+
+                    FloatRect faceLoseBounds = faceLoseS.getGlobalBounds();
+                    FloatRect faceWinBounds = faceHappyS.getGlobalBounds();
+                    if(faceLoseBounds.contains(mouse) || faceWinBounds.contains(mouse)){
+                        gameWindow.close();
+                        Minesweeper(gameCol, gameRow, mineNum, font);
+                    }
+
+                }
+            }
+        }
 
         gameWindow.draw(tileHiddenS);
 
         //Need to create different face states
-        gameWindow.draw(faceHappyS);
-        faceHappyS.setPosition(((column/2)*32)-32, 32*(row+0.5f));
+        faceLoseS.setPosition(((column / 2) * 32) - 32, 32 * (row + 0.5f));
+        faceHappyS.setPosition(((column / 2) * 32) - 32, 32 * (row + 0.5f));
+        if(!gameLost) {
+            gameWindow.draw(faceHappyS);
+        }else{
+            gameWindow.draw(faceLoseS);
+            faceLoseS.setPosition(((column / 2) * 32) - 32, 32 * (row + 0.5f));
+        }
         gameWindow.draw(debugTextureS);
         debugTextureS.setPosition((column*32)-304, 32*(row+0.5f));
 
+        FlagCounter(flagCount, gameWindow, row);
+        //gameWindow.draw(digitZeroS);
+        //digitZeroS.setPosition(33, 32 * (row + 0.5f) + 16);
+
+
+
+
+//        if(!tileFlagged){
+//            gameWindow.draw(tileHiddenS);
+//        }
+//        if(tileFlagged){
+//            gameWindow.draw(tileHiddenS);
+//            gameWindow.draw(flagTextureS);
+//        }
+
         if(!screenPaused){
             gameWindow.draw(pauseButtonS);
-        }
-        if(screenPaused){
+        }else{
             gameWindow.draw(playButtonS);
         }
 
